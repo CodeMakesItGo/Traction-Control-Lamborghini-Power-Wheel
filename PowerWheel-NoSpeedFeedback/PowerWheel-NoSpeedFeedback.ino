@@ -3,6 +3,7 @@
 #include <ESP8266mDNS.h>
 #include <TaskScheduler.h>
 #include <math.h>
+#include <EEPROM.h>
 
 //Board IO Settings
 #define BATTERY_IN (A0)
@@ -14,8 +15,9 @@
 #define MOTOR_REV_OUT (D8)
 
 //Duty Cycle Stepper
-#define DC_STEP (10.0)
+#define DC_STEP 10
 #define GEAR_COUNT 10
+#define EEPROM_KEY 99
 
 /* Set these to your desired credentials. */
 const char *ssid = "Lambo";
@@ -35,7 +37,7 @@ int MaxDutyCycle = 100;
 
 //Gear Selection
 typedef enum {GNEUTRAL, GFORWARD, GREVERSE} eGear;
-eGear GearDebounce[GEAR_COUNT] = {GNEUTRAL}; //1 second of neutral
+eGear GearDebounce[GEAR_COUNT] = {GNEUTRAL}; //.5 second of neutral
 eGear Gear = GNEUTRAL;
 int GearIndex = 0;
 
@@ -46,6 +48,9 @@ int BatteryValue;
 //Task Scheduler
 void task1HzCallback();
 void task5HzCallback();
+
+//eeprom token
+int eepromKey = EEPROM_KEY;
 
 Task task1Hz(1000, TASK_FOREVER, &task1HzCallback);
 Task task5Hz(200, TASK_FOREVER, &task5HzCallback);
@@ -154,7 +159,25 @@ void setup()
   pinMode(RIGHT_WHEEL_IN, INPUT_PULLUP);
   pinMode(PEDAL_REV_IN, INPUT_PULLUP);
   pinMode(PEDAL_FWD_IN, INPUT_PULLUP);
+
   
+  
+  //get settings
+  EEPROM.get(0, eepromKey);
+  
+  if(eepromKey != EEPROM_KEY)
+  {
+    eepromKey = EEPROM_KEY;
+    EEPROM.put(sizeof(int) * 0, eepromKey);
+    EEPROM.put(sizeof(int) * 1, MinDutyCycle);
+    EEPROM.put(sizeof(int) * 2, MaxDutyCycle);
+  }
+  else
+  {
+    EEPROM.put(sizeof(int) * 0, eepromKey);
+    EEPROM.get(sizeof(int) * 1, MinDutyCycle);
+    EEPROM.get(sizeof(int) * 2, MaxDutyCycle);
+  }
 
   //Start Wireless
   WiFi.softAP(ssid, password);

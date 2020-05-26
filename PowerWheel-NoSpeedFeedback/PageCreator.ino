@@ -49,7 +49,7 @@ void buildPageHeader()
   webSite += "</header>";
 }
 
-void buildPageFooter(const char* javascript) 
+void buildPageFooter() 
 {
   //http://base64.wutils.com/encoding-online/
  
@@ -66,8 +66,6 @@ void buildPageFooter(const char* javascript)
   webSite += ".";
   webSite += (String)ip[3];
   webSite += "</footer>";
-
-  webSite += javascript;
   
   webSite += "</BODY>\n";
   
@@ -79,5 +77,5 @@ void buildHomePage()
 {
   buildPageHeader();
   HomePage();
-  buildPageFooter(HOME_SCRIPT);
+  buildPageFooter();
 }
