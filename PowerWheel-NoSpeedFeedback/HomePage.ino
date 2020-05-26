@@ -44,9 +44,10 @@ void handleSettings()
   }
 
   //save settings
-  EEPROM.put(sizeof(int) * 0, eepromKey);
-  EEPROM.put(sizeof(int) * 1, MinDutyCycle);
-  EEPROM.put(sizeof(int) * 2, MaxDutyCycle);
+  EEPROM.write(0, eepromKey);
+  EEPROM.write(1, MinDutyCycle);
+  EEPROM.write(2, MaxDutyCycle);
+  EEPROM.commit();
     
   server.send(200, "text/html", webSite);
 }
@@ -63,10 +64,21 @@ void handleLamboData() {
   XML +=      String(MinDutyCycle);
   XML += "  </MinDC>";
 
+  int temp = 0;
+  EEPROM.get(sizeof(int) * 1, temp);
+  XML += "  <EepromMinDC>";
+  XML +=      String(temp);
+  XML += "  </EepromMinDC>";
+
   XML += "  <MaxDC>";
   XML +=      String(MaxDutyCycle);
   XML += "  </MaxDC>";
 
+  EEPROM.get(sizeof(int) * 2, temp);
+  XML += "  <EepromMaxDC>";
+  XML +=      String(temp);
+  XML += "  </EepromMaxDC>";
+  
   XML += "  <FWD>";
   XML +=      String(digitalRead(PEDAL_FWD_IN));
   XML += "  </FWD>";
@@ -74,13 +86,6 @@ void handleLamboData() {
   XML += "  <REV>";
   XML +=      String(digitalRead(PEDAL_REV_IN));
   XML += "  </REV>";
-
-  XML += "  <TGEAR>";
-  for(int i = 0; i < GEAR_COUNT; ++i)
-  {
-    XML += String(GearDebounce[i]);
-  }
-  XML += "  </TGEAR>";
   
   XML += "  <GEAR>";
   if(Gear == GNEUTRAL)  XML +=     "NEUTRAL";

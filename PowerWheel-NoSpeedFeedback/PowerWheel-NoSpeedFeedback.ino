@@ -17,7 +17,7 @@
 //Duty Cycle Stepper
 #define DC_STEP 10
 #define GEAR_COUNT 10
-#define EEPROM_KEY 99
+#define EEPROM_KEY 33
 
 /* Set these to your desired credentials. */
 const char *ssid = "Lambo";
@@ -32,8 +32,8 @@ String webSite, XML;
 
 //Motor Control
 int DutyCycle = 0;
-int MinDutyCycle = 30;
-int MaxDutyCycle = 100;
+uint8_t MinDutyCycle = 30;
+uint8_t MaxDutyCycle = 100;
 
 //Gear Selection
 typedef enum {GNEUTRAL, GFORWARD, GREVERSE} eGear;
@@ -50,7 +50,7 @@ void task1HzCallback();
 void task5HzCallback();
 
 //eeprom token
-int eepromKey = EEPROM_KEY;
+uint8_t eepromKey = EEPROM_KEY;
 
 Task task1Hz(1000, TASK_FOREVER, &task1HzCallback);
 Task task5Hz(200, TASK_FOREVER, &task5HzCallback);
@@ -163,22 +163,21 @@ void setup()
   
   
   //get settings
-  EEPROM.get(0, eepromKey);
+  EEPROM.begin(32);
+  eepromKey = EEPROM.read(0);
   
   if(eepromKey != EEPROM_KEY)
   {
     eepromKey = EEPROM_KEY;
-    EEPROM.put(sizeof(int) * 0, eepromKey);
-    EEPROM.put(sizeof(int) * 1, MinDutyCycle);
-    EEPROM.put(sizeof(int) * 2, MaxDutyCycle);
+    EEPROM.write(0, eepromKey);
+    EEPROM.write(1, MinDutyCycle);
+    EEPROM.write(2, MaxDutyCycle);
+    EEPROM.commit();
   }
-  else
-  {
-    EEPROM.put(sizeof(int) * 0, eepromKey);
-    EEPROM.get(sizeof(int) * 1, MinDutyCycle);
-    EEPROM.get(sizeof(int) * 2, MaxDutyCycle);
-  }
-
+  
+  MinDutyCycle = EEPROM.read(1);
+  MaxDutyCycle = EEPROM.read(2);
+  
   //Start Wireless
   WiFi.softAP(ssid, password);
   ip = WiFi.softAPIP();
