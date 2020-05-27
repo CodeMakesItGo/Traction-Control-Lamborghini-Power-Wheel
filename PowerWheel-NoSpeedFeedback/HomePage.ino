@@ -65,7 +65,7 @@ void handleLamboData() {
   XML += "  </MinDC>";
 
   int temp = 0;
-  EEPROM.get(sizeof(int) * 1, temp);
+  temp = EEPROM.read(1);
   XML += "  <EepromMinDC>";
   XML +=      String(temp);
   XML += "  </EepromMinDC>";
@@ -74,7 +74,7 @@ void handleLamboData() {
   XML +=      String(MaxDutyCycle);
   XML += "  </MaxDC>";
 
-  EEPROM.get(sizeof(int) * 2, temp);
+  temp = EEPROM.read(2);
   XML += "  <EepromMaxDC>";
   XML +=      String(temp);
   XML += "  </EepromMaxDC>";

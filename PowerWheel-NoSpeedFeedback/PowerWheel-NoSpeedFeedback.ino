@@ -16,7 +16,7 @@
 
 //Duty Cycle Stepper
 #define DC_STEP 10
-#define GEAR_COUNT 10
+#define GEAR_COUNT 5
 #define EEPROM_KEY 33
 
 /* Set these to your desired credentials. */
@@ -159,8 +159,6 @@ void setup()
   pinMode(RIGHT_WHEEL_IN, INPUT_PULLUP);
   pinMode(PEDAL_REV_IN, INPUT_PULLUP);
   pinMode(PEDAL_FWD_IN, INPUT_PULLUP);
-
-  
   
   //get settings
   EEPROM.begin(32);
