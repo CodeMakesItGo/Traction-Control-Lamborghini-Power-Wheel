@@ -16,7 +16,7 @@
 
 //Duty Cycle Stepper
 #define DC_STEP 10
-#define GEAR_COUNT 5
+#define GEAR_COUNT 3
 #define EEPROM_KEY 33
 
 /* Set these to your desired credentials. */
@@ -33,7 +33,7 @@ String webSite, XML;
 //Motor Control
 int DutyCycle = 0;
 uint8_t MinDutyCycle = 30;
-uint8_t MaxDutyCycle = 100;
+uint8_t MaxDutyCycle = 70;
 
 //Gear Selection
 typedef enum {GNEUTRAL, GFORWARD, GREVERSE} eGear;
