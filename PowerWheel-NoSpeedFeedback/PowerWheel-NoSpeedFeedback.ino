@@ -6,17 +6,15 @@
 #include <EEPROM.h>
 
 //Board IO Settings
-#define BATTERY_IN (A0)
-#define LEFT_WHEEL_IN (D2)
-#define RIGHT_WHEEL_IN (D1)
+#define PEDAL_FWD_IN (D2)
+#define PEDAL_REV_IN (D1)
 #define MOTOR_FWD_OUT (D5)
-#define PEDAL_FWD_IN (D6)
-#define PEDAL_REV_IN (D7)
+#define MOTOR_FWD_LED_OUT (D6)
+#define MOTOR_REV_LED_OUT (D7)
 #define MOTOR_REV_OUT (D8)
 
 //Duty Cycle Stepper
 #define DC_STEP 10
-#define GEAR_COUNT 3
 #define EEPROM_KEY 33
 
 /* Set these to your desired credentials. */
@@ -37,31 +35,17 @@ uint8_t MaxDutyCycle = 70;
 
 //Gear Selection
 typedef enum {GNEUTRAL, GFORWARD, GREVERSE} eGear;
-eGear GearDebounce[GEAR_COUNT] = {GNEUTRAL}; //.5 second of neutral
 eGear Gear = GNEUTRAL;
-int GearIndex = 0;
-
-//Battery
-double BatteryVoltage;
-int BatteryValue;
 
 //Task Scheduler
-void task1HzCallback();
 void task5HzCallback();
 
 //eeprom token
 uint8_t eepromKey = EEPROM_KEY;
 
-Task task1Hz(1000, TASK_FOREVER, &task1HzCallback);
 Task task5Hz(200, TASK_FOREVER, &task5HzCallback);
 Scheduler task;
 
-
-void task1HzCallback()
-{
-  BatteryValue = analogRead(BATTERY_IN);
-  BatteryVoltage = (12.0 / 1023.0) * (double)BatteryValue * 3.3;
-}
 
 void gearSelection()
 {
@@ -71,41 +55,26 @@ void gearSelection()
     //pedal up
     if(pedalFwd == LOW && pedalRev == LOW)
     {
-      GearDebounce[GearIndex] = GNEUTRAL;
+      Gear = GNEUTRAL;
     }
 
     //Error, both should never be high, kill power
     else if(pedalFwd == HIGH && pedalRev == HIGH)
     {
-      GearDebounce[GearIndex] = GNEUTRAL;
+      Gear = GNEUTRAL;
     }
 
     //Forward Gear
     else if(pedalFwd == HIGH)
     {
-      GearDebounce[GearIndex] = GFORWARD;
+      Gear = GFORWARD;
     }
 
     //Reverse Gear
     else if(pedalRev == HIGH)
     {
-      GearDebounce[GearIndex] = GREVERSE;
+      Gear = GREVERSE;
     }
-
-    GearIndex++;
-    GearIndex = GearIndex % GEAR_COUNT;
-
-    //If gear does not match for a half second then set to neutral
-    for(int i = 0; i < GEAR_COUNT; ++i)
-    {
-      if(GearDebounce[0] != GearDebounce[i])
-      {
-         Gear = GNEUTRAL;
-         return;
-      }
-    }
-
-    Gear = GearDebounce[0];
 }
 
 
@@ -123,6 +92,9 @@ void task5HzCallback()
   
     analogWrite(MOTOR_REV_OUT,0);
     analogWrite(MOTOR_FWD_OUT, map(DutyCycle, 0, 100, 0, 1023));
+
+    digitalWrite(MOTOR_FWD_LED_OUT, HIGH);
+    digitalWrite(MOTOR_REV_LED_OUT, LOW);
   }
   else if(Gear == GREVERSE)
   {
@@ -130,9 +102,12 @@ void task5HzCallback()
    
     DutyCycle = _max(DutyCycle, MinDutyCycle);
     DutyCycle = _min(DutyCycle, MaxDutyCycle);
-    
-    analogWrite(MOTOR_FWD_OUT,0);
+
     analogWrite(MOTOR_REV_OUT, map(DutyCycle, 0, 100, 0, 1023));
+    analogWrite(MOTOR_FWD_OUT,0);
+
+    digitalWrite(MOTOR_FWD_LED_OUT, LOW);
+    digitalWrite(MOTOR_REV_LED_OUT, HIGH);
   }
   else
   {
@@ -143,6 +118,9 @@ void task5HzCallback()
     
     analogWrite(MOTOR_REV_OUT,0);
     analogWrite(MOTOR_FWD_OUT,0);
+
+    digitalWrite(MOTOR_FWD_LED_OUT, LOW);
+    digitalWrite(MOTOR_REV_LED_OUT, LOW);
   }
 }
 
@@ -151,14 +129,18 @@ void setup()
 {
   pinMode(MOTOR_FWD_OUT, OUTPUT);
   pinMode(MOTOR_REV_OUT, OUTPUT);
+
+  pinMode(MOTOR_FWD_LED_OUT, OUTPUT);
+  pinMode(MOTOR_REV_LED_OUT, OUTPUT);
   
   analogWrite(MOTOR_FWD_OUT,0);
   analogWrite(MOTOR_REV_OUT,0);
   
-  pinMode(LEFT_WHEEL_IN, INPUT_PULLUP);
-  pinMode(RIGHT_WHEEL_IN, INPUT_PULLUP);
   pinMode(PEDAL_REV_IN, INPUT_PULLUP);
   pinMode(PEDAL_FWD_IN, INPUT_PULLUP);
+
+  digitalWrite(MOTOR_FWD_LED_OUT, HIGH);
+  digitalWrite(MOTOR_REV_LED_OUT, HIGH);
   
   //get settings
   EEPROM.begin(32);
@@ -185,9 +167,6 @@ void setup()
   
   //start scheduled tasks
   task.init();
-   
-  task.addTask(task1Hz);
-  task1Hz.enable();
   
   task.addTask(task5Hz);
   task5Hz.enable();
@@ -197,6 +176,9 @@ void setup()
   server.on("/", handleSettings);
   
   server.begin();
+
+  digitalWrite(MOTOR_FWD_LED_OUT, LOW);
+  digitalWrite(MOTOR_REV_LED_OUT, LOW);
 }
 
 

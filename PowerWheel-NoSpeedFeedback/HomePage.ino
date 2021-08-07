@@ -56,10 +56,6 @@ void handleLamboData() {
   XML = "<?xml version='1.0'?>";
   XML += "<lamboData>";
 
-  XML += "  <BV>";
-  XML +=      String(BatteryVoltage, 2);
-  XML += "  </BV>";
-
   XML += "  <MinDC>";
   XML +=      String(MinDutyCycle);
   XML += "  </MinDC>";
